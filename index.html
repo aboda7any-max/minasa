@@ -3,209 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة الدكتور عبدالرحمن هاني - كيمياء الثانوية العامة</title>
-    <!-- مكتبة التصميم والتنسيق Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#10B981',
-                        darkBg: '#0f172a',
-                        cardBg: '#1e293b'
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- خط القاهرة العربي الجميل -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <title>منصة الكيمياء التعليمية</title>
+    <!-- استيراد مكتبات Firebase (النسخة المتوافقة مع الكود) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: 'Cairo', sans-serif; }
+        :root { --primary: #4f46e5; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; direction: rtl; }
+        .container { max-width: 600px; margin: 0 auto; background: var(--card); padding: 30px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        h2 { color: var(--primary); text-align: center; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; }
+        input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; background-color: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+        button:hover { background-color: #4338ca; }
+        .alert { padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold; display: none; }
+        .alert-success { background-color: #d1fae5; color: #065f46; }
+        .alert-error { background-color: #fee2e2; color: #991b1b; }
+        
+        /* تصميم لوحة الإحصائيات بعد تسجيل الدخول */
+        #dashboard-view { display: none; }
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: #f1f5f9; padding: 15px; border-radius: 10px; text-align: center; }
+        .stat-card h3 { margin: 0 0 5px 0; font-size: 24px; color: var(--primary); }
+        .stat-card p { margin: 0; font-size: 14px; color: #64748b; }
+        .progress-container { background: #e2e8f0; border-radius: 10px; height: 15px; width: 100%; margin: 20px 0; overflow: hidden; }
+        .progress-bar { background: var(--primary); height: 100%; width: 0%; transition: width 0.5s; }
+        .logout-btn { background-color: #ef4444; margin-top: 15px; }
+        .logout-btn:hover { background-color: #dc2626; }
     </style>
 </head>
-<body class="bg-darkBg text-gray-100 min-h-screen">
+<body>
 
-    <!-- شريط التنقل العلوي -->
-    <nav class="bg-cardBg/80 backdrop-blur-md border-b border-gray-800 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center space-x-3 space-x-reverse">
-                    <span class="text-2xl font-black text-primary">🧪 د. عبدالرحمن هاني</span>
-                </div>
-                <div id="authNavArea" class="flex items-center space-x-4 space-x-reverse">
-                    <button onclick="openModal('loginModal')" class="bg-primary/20 text-primary border border-primary/40 px-4 py-2 rounded-xl text-sm font-bold hover:bg-primary/30 transition">تسجيل الدخول</button>
-                    <button onclick="openModal('registerModal')" class="bg-primary text-gray-900 px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-400 transition shadow-lg shadow-primary/20">حساب جديد</button>
-                </div>
-            </div>
-        </div>
-    </nav>
+<div class="container">
+    <!-- رسائل التنبيه والنجاح -->
+    <div id="alertBox" class="alert"></div>
 
-    <!-- الهيدر الرئيسي -->
-    <header class="py-12 px-4 text-center bg-gradient-to-b from-cardBg to-darkBg border-b border-gray-800">
-        <div class="max-w-3xl mx-auto">
-            <span class="bg-primary/10 text-primary px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border border-primary/20">المحتوى التعليمي الأقوى للثانوية العامة</span>
-            <h1 class="text-3xl sm:text-5xl font-black mt-4 mb-3 tracking-tight">كيمياء الثانوية العامة مع <span class="text-primary">الدكتور عبدالرحمن</span></h1>
-            <p class="text-gray-400 text-sm sm:text-base">بوابة تفاعلية متكاملة لشرح الأبواب، حل التمارين، والامتحانات المؤهلة للدرجة النهائية.</p>
+    <!-- نموذج تسجيل الحساب (يظهر للمستخدم غير المسجل) -->
+    <div id="auth-view">
+        <h2>تسجيل حساب طالب جديد</h2>
+        <div class="form-group">
+            <label>اسم الطالب الكامل</label>
+            <input type="text" id="studentName" placeholder="اكتب اسمك هنا">
         </div>
-    </header>
-
-    <!-- الأقسام الرئيسية -->
-    <main class="max-w-7xl mx-auto px-4 py-10 sm:px-6 lg:px-8">
-        <h2 class="text-xl font-bold mb-6 border-r-4 border-primary pr-3">أبواب المنهج الدراسي</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- الباب الأول -->
-            <div class="bg-cardBg border border-gray-800 rounded-2xl p-6 shadow-xl hover:border-primary/50 transition">
-                <div class="text-primary text-3xl font-black mb-2">01</div>
-                <h3 class="text-lg font-bold mb-2">الباب الأول: العناصر الانتقالية</h3>
-                <p class="text-gray-400 text-sm mb-4">شرح تفصيلي للخواص العامة والسلسلة الانتقالية الأولى وتطبيقاتها.</p>
-                <button onclick="checkAccess('chapter1')" class="w-full bg-gray-800 border border-gray-700 py-2.5 rounded-xl font-bold text-sm text-primary hover:bg-primary hover:text-gray-900 transition">ابدأ الدراسة والاختبار</button>
-            </div>
-            <!-- الباب الثاني -->
-            <div class="bg-cardBg border border-gray-800 rounded-2xl p-6 shadow-xl hover:border-primary/50 transition">
-                <div class="text-primary text-3xl font-black mb-2">02</div>
-                <h3 class="text-lg font-bold mb-2">الباب الثاني: التحليل الكيميائي</h3>
-                <p class="text-gray-400 text-sm mb-4">أسس التحليل الوصفي والكمي والمسائل المعقدة بخطوات مبسطة.</p>
-                <button onclick="checkAccess('chapter2')" class="w-full bg-gray-800 border border-gray-700 py-2.5 rounded-xl font-bold text-sm text-primary hover:bg-primary hover:text-gray-900 transition">ابدأ الدراسة والاختبار</button>
-            </div>
+        <div class="form-group">
+            <label>البريد الإلكتروني</label>
+            <input type="email" id="studentEmail" placeholder="example@gmail.com">
         </div>
-    </main>
-
-    <!-- نافذة تسجيل الدخول -->
-    <div id="loginModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-cardBg border border-gray-800 w-full max-w-md rounded-2xl p-6 shadow-2xl">
-            <h3 class="text-xl font-bold mb-4">تسجيل الدخول لمنصة الطالب</h3>
-            <form onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1">البريد الإلكتروني</label>
-                    <input type="email" id="loginEmail" required class="w-full bg-darkBg border border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1">كلمة المرور</label>
-                    <input type="password" id="loginPassword" required class="w-full bg-darkBg border border-gray-700 rounded-xl px-4 py-2.5 text-sm focus:border-primary focus:outline-none">
-                </div>
-                <div class="flex space-x-2 space-x-reverse pt-2">
-                    <button type="submit" class="flex-1 bg-primary text-gray-900 py-2.5 rounded-xl font-bold text-sm hover:bg-emerald-400 transition">دخول</button>
-                    <button type="button" onclick="closeModal('loginModal')" class="bg-gray-800 text-gray-300 px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-700 transition">إلغاء</button>
-                </div>
-            </form>
+        <div class="form-group">
+            <label>كلمة المرور</label>
+            <input type="password" id="studentPassword" placeholder="********">
         </div>
+        <button onclick="registerStudent()">تسجيل الحساب</button>
     </div>
 
-    <!-- نافذة حساب جديد -->
-    <div id="registerModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div class="bg-cardBg border border-gray-800 w-full max-w-md rounded-2xl p-6 shadow-2xl">
-            <h3 class="text-xl font-bold mb-4">إنشاء حساب طالب جديد</h3>
-            <form onsubmit="handleRegister(event)" class="space-y-3">
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1">اسم الطالب الكامل</label>
-                    <input type="text" id="regName" required class="w-full bg-darkBg border border-gray-700 rounded-xl px-4 py-2 text-sm focus:border-primary focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1">رقم الهاتف</label>
-                    <input type="tel" id="regPhone" required class="w-full bg-darkBg border border-gray-700 rounded-xl px-4 py-2 text-sm focus:border-primary focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1">البريد الإلكتروني</label>
-                    <input type="email" id="regEmail" required class="w-full bg-darkBg border border-gray-700 rounded-xl px-4 py-2 text-sm focus:border-primary focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1">كلمة المرور</label>
-                    <input type="password" id="regPassword" required class="w-full bg-darkBg border border-gray-700 rounded-xl px-4 py-2 text-sm focus:border-primary focus:outline-none">
-                </div>
-                <div class="flex space-x-2 space-x-reverse pt-2">
-                    <button type="submit" class="flex-1 bg-primary text-gray-900 py-2.5 rounded-xl font-bold text-sm hover:bg-emerald-400 transition">تسجيل الحساب</button>
-                    <button type="button" onclick="closeModal('registerModal')" class="bg-gray-800 text-gray-300 px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-700 transition">إلغاء</button>
-                </div>
-            </form>
+    <!-- لوحة إحصائيات وحساب الطالب (تظهر بعد تسجيل الدخول) -->
+    <div id="dashboard-view">
+        <h2 id="welcomeUser">مرحباً بك يا بطل</h2>
+        <div style="text-align: center; margin-bottom: 20px; color: #059669; font-weight: bold;" id="statusBadge">حالة الحساب: قيد التفعيل من الأدمن</div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3 id="statExams">0</h3>
+                <p>الامتحانات المكتملة</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="statScore">0%</h3>
+                <p>متوسط الدرجات</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="statVideos">0 / 20</h3>
+                <p>الفيديوهات المشاهدة</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="statRank">الثالث الثانوي</h3>
+                <p>المرحلة الدراسية</p>
+            </div>
         </div>
+
+        <label>نسبة إنجاز الكورس العامة:</label>
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <p style="text-align: center; font-size: 14px;" id="progressText">تم إنجاز 0% من المحتوى</p>
+
+        <button class="logout-btn" onclick="logoutStudent()">تسجيل الخروج</button>
     </div>
+</div>
 
-    <!-- ربط Firebase وتشغيل المنصة -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<script>
+  // إعدادات فايربيس الخاصة بمشروعك
+  const firebaseConfig = {
+    apiKey: "AIzaSyDC9jkwKtFI_EXovBY2ylC5uGwXjdJbu0E",
+    authDomain: "platform-dr-abdalrhman.firebaseapp.com",
+    databaseURL: "https://platform-dr-abdalrhman-default-rtdb.firebaseio.com",
+    projectId: "platform-dr-abdalrhman",
+    storageBucket: "platform-dr-abdalrhman.firebasestorage.app",
+    messagingSenderId: "832080366938",
+    appId: "1:832080366938:web:4275a1a81f3becfa84b763",
+    measurementId: "G-DR8CGC8DNE"
+  };
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDC9jkwKtFI_EXovBY2ylC5uGwXjdJbu0E",
-            authDomain: "platform-dr-abdalrhman.firebaseapp.com",
-            projectId: "platform-dr-abdalrhman",
-            storageBucket: "platform-dr-abdalrhman.firebasestorage.app",
-            messagingSenderId: "832080366938",
-            appId: "1:832080366938:web:4275a1a81f3becfa84b763",
-            measurementId: "G-DR8CGC8DNE"
-        };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+  const alertBox = document.getElementById("alertBox");
 
-        window.openModal = function(id) { document.getElementById(id).classList.remove('hidden'); }
-        window.closeModal = function(id) { document.getElementById(id).classList.add('hidden'); }
+  function showAlert(message, type) {
+      alertBox.innerText = message;
+      alertBox.className = "alert " + (type === "success" ? "alert-success" : "alert-error");
+      alertBox.style.display = "block";
+  }
 
-        window.handleRegister = async function(e) {
-            e.preventDefault();
-            const name = document.getElementById('regName').value;
-            const phone = document.getElementById('regPhone').value;
-            const email = document.getElementById('regEmail').value;
-            const password = document.getElementById('regPassword').value;
+  // وظيفة تسجيل طالب جديد وحفظ بياناته في قاعدة البيانات
+  function registerStudent() {
+      const name = document.getElementById("studentName").value.trim();
+      const email = document.getElementById("studentEmail").value.trim();
+      const password = document.getElementById("studentPassword").value.trim();
 
-            try {
-                const userCred = await createUserWithEmailAndPassword(auth, email, password);
-                await setDoc(doc(db, "users", userCred.user.uid), {
-                    name, phone, email, status: "pending", createdAt: new Date()
-                });
-                alert("تم إنشاء الحساب بنجاح! في انتظار تفعيل الإدارة لحسابك.");
-                closeModal('registerModal');
-            } catch (err) {
-                alert("خطأ في التسجيل: " + err.message);
-            }
-        }
+      if (!name || !email || !password) {
+          showAlert("الرجاء ملء جميع الحقول بشكل صحيح!", "error");
+          return;
+      }
 
-        window.handleLogin = async function(e) {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
+      auth.createUserWithEmailAndPassword(email, password)
+          .then((userCredential) => {
+              const user = userCredential.user;
+              // حفظ بيانات الطالب في Firestore ليراها الأدمن مع قيم افتراضية للإحصائيات
+              return db.collection("users").doc(user.uid).set({
+                  name: name,
+                  email: email,
+                  status: "pending", // في انتظار التفعيل
+                  examsCompleted: 0,
+                  averageScore: 0,
+                  videosWatched: 0,
+                  totalVideos: 20,
+                  createdAt: firebase.firestore.FieldValue.serverTimestamp()
+              });
+          })
+          .then(() => {
+              showAlert("تم التسجيل بنجاح! جاري تحويلك للوحة التحكم...", "success");
+              setTimeout(loadDashboard, 1500);
+          })
+          .catch((error) => {
+              showAlert("خطأ في التسجيل: " + error.message, "error");
+          });
+  }
 
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                alert("تم تسجيل الدخول بنجاح!");
-                closeModal('loginModal');
-                location.reload();
-            } catch (err) {
-                alert("خطأ في تسجيل الدخول: تأكد من بياناتك.");
-            }
-        }
+  // مراقبة حالة تسجيل الدخول وعرض لوحة الإحصائيات
+  auth.onAuthStateChanged((user) => {
+      if (user) {
+          loadDashboardData(user.uid);
+      }
+  });
 
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    document.getElementById('authNavArea').innerHTML = `
-                        <span class="text-sm font-bold text-emerald-400">أهلاً، ${userData.name}</span>
-                        <button onclick="window.logout()" class="bg-red-500/20 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-red-500/30 transition">خروج</button>
-                    `;
-                }
-            }
-        });
+  function loadDashboard() {
+      document.getElementById("auth-view").style.display = "none";
+      document.getElementById("dashboard-view").style.display = "block";
+  }
 
-        window.logout = function() {
-            signOut(auth).then(() => location.reload());
-        }
+  function loadDashboardData(uid) {
+      db.collection("users").doc(uid).get().then((doc) => {
+          if (doc.exists) {
+              const data = doc.data();
+              document.getElementById("welcomeUser").innerText = "مرحباً، " + data.name;
+              document.getElementById("statExams").innerText = data.examsCompleted || 0;
+              document.getElementById("statScore").innerText = (data.averageScore || 0) + "%";
+              document.getElementById("statVideos").innerText = (data.videosWatched || 0) + " / 20";
+              
+              // حساب نسبة الإنجاز بناءً على الفيديوهات المشاهدة
+              const watched = data.videosWatched || 0;
+              const percent = Math.round((watched / 20) * 100);
+              document.getElementById("progressBar").style.width = percent + "%";
+              document.getElementById("progressText").innerText = "تم إنجاز " + percent + "% من المحتوى";
 
-        window.checkAccess = function(chapter) {
-            const user = auth.currentUser;
-            if (!user) {
-                alert("برجاء تسجيل الدخول أولاً للوصول لمحتوى الأبواب والامتحانات!");
-                openModal('loginModal');
-            } else {
-                alert("جاري فتح المحتوى الخاص بك...");
-            }
-        }
-    </script>
+              loadDashboard();
+          }
+      });
+  }
+
+  // وظيفة تسجيل الخروج
+  function logoutStudent() {
+      auth.signOut().then(() => {
+          document.getElementById("dashboard-view").style.display = "none";
+          document.getElementById("auth-view").style.display = "block";
+          showAlert("تم تسجيل الخروج بنجاح", "success");
+          document.getElementById("studentName").value = "";
+          document.getElementById("studentEmail").value = "";
+          document.getElementById("studentPassword").value = "";
+      });
+  }
+</script>
+
 </body>
 </html>
